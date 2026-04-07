@@ -35,12 +35,12 @@ $Wsh = New-Object -ComObject WScript.Shell
 }
 
 # 5. 下载并分发 EA
-$eaUrl = "https://raw.githubusercontent.com/F96371/MT5_Deploy/main/智汇矩阵 V102 版本 (ssai).ex5"
+$eaUrl = "https://raw.githubusercontent.com/F96371/MT5_Deploy/main/Zhihui_Matrix_V102.ex5"
 1..5 | ForEach-Object {
     $n = "{0:D2}" -f $_
     $dir = "C:\MT5_$n\MQL5\Experts\"
     if (!(Test-Path $dir)) { New-Item $dir -Type Directory -Force }
-    Invoke-WebRequest -Uri $eaUrl -OutFile "$dir\智汇矩阵 V102 版本 (ssai).ex5" -Force
+    Invoke-WebRequest -Uri $eaUrl -OutFile "$dir\Zhihui_Matrix_V102.ex5" -Force
 }
 
 # 6. 创建日志清理脚本
@@ -97,8 +97,8 @@ Get-ChildItem "$([Environment]::GetFolderPath('Startup'))\Account_*.lnk" | Selec
 1..5 | ForEach-Object { $n = "{0:D2}" -f $_; Copy-Item "C:\MT5_Master" "C:\MT5_$n" -Recurse -Force }
 
 # 只分发 EA
-$eaUrl = "https://raw.githubusercontent.com/F96371/MT5_Deploy/main/智汇矩阵 V102 版本 (ssai).ex5"
-1..5 | ForEach-Object { $n = "{0:D2}" -f $_; $d = "C:\MT5_$n\MQL5\Experts\"; if (!(Test-Path $d)) { New-Item $d -Type Directory }; Invoke-WebRequest -Uri $eaUrl -OutFile "$d\智汇矩阵 V102 版本 (ssai).ex5" -Force }
+$eaUrl = "https://raw.githubusercontent.com/F96371/MT5_Deploy/main/Zhihui_Matrix_V102.ex5"
+1..5 | ForEach-Object { $n = "{0:D2}" -f $_; $d = "C:\MT5_$n\MQL5\Experts\"; if (!(Test-Path $d)) { New-Item $d -Type Directory }; Invoke-WebRequest -Uri $eaUrl -OutFile "$d\Zhihui_Matrix_V102.ex5" -Force }
 
 # 只创建快捷方式 + 自启动
 $Wsh = New-Object -ComObject WScript.Shell; 1..5 | ForEach-Object { $n = "{0:D2}" -f $_; $Sc = $Wsh.CreateShortcut("$env:USERPROFILE\Desktop\Account_$n.lnk"); $Sc.TargetPath = "C:\MT5_$n\terminal64.exe"; $Sc.Arguments = "/portable /skipupdate"; $Sc.WorkingDirectory = "C:\MT5_$n"; $Sc.Save(); Copy-Item "$env:USERPROFILE\Desktop\Account_$n.lnk" "$([Environment]::GetFolderPath('Startup'))\" -Force }
@@ -118,7 +118,7 @@ Remove-Item "$([Environment]::GetFolderPath('Startup'))\Account_*.lnk" -Force -E
 | 文件 | Raw 链接 | 用途 |
 |------|---------|------|
 | exness5setup.exe | `https://raw.githubusercontent.com/F96371/MT5_Deploy/main/exness5setup.exe` | MT5 安装器 |
-| 智汇矩阵 V102 版本 (ssai).ex5 | `https://raw.githubusercontent.com/F96371/MT5_Deploy/main/智汇矩阵 V102 版本 (ssai).ex5` | EA 策略文件 |
+| Zhihui_Matrix_V102.ex5 | `https://raw.githubusercontent.com/F96371/MT5_Deploy/main/Zhihui_Matrix_V102.ex5` | EA 策略文件 |
 | MT5-SOP.md | `https://raw.githubusercontent.com/F96371/MT5_Deploy/main/MT5-SOP.md` | 本操作手册 |
 
 ---
