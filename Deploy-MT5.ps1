@@ -3,7 +3,8 @@
 
 # [配置区]
 $githubBase = "https://raw.githubusercontent.com/F96371/MT5_Deploy/main"
-$eaName = "Zhihui_Matrix_V102.ex5"
+$eaUrl = "$githubBase/智汇矩阵 V102 版本 (ssai).ex5"
+$eaName = "智汇矩阵 V102 版本 (ssai).ex5"
 
 # 1. 下载并静默安装母本
 Write-Host "`n[1/4] 正在下载并静默安装 MT5 母本..." -ForegroundColor Cyan
@@ -26,7 +27,7 @@ Write-Host "[3/4] 正在从云端推送 EA 策略..." -ForegroundColor Cyan
     $n = "{0:D2}" -f $_
     $dir = "C:\MT5_$n\MQL5\Experts\"
     if (!(Test-Path $dir)) { New-Item $dir -Type Directory -Force }
-    Invoke-WebRequest -Uri "$githubBase/$eaName" -OutFile "$dir\$eaName"
+    Invoke-WebRequest -Uri $eaUrl -OutFile "$dir\$eaName"
 }
 
 # 4. 生成桌面快捷方式并注入开机自启
