@@ -13,7 +13,7 @@
 # ===== MT5 全流程自动化部署 (含母本安装) =====
 
 # [配置区]
-$githubBase = "https://ghproxy.net/https://raw.githubusercontent.com/F96371/MT5_Deploy/main"
+$githubBase = "https://raw.githubusercontent.com/F96371/MT5_Deploy/main"
 $eaName = "Zhihui_Matrix_V102.ex5"
 
 # 1. 下载并静默安装母本
@@ -93,7 +93,7 @@ Get-ChildItem "$([Environment]::GetFolderPath('Startup'))\Account_*.lnk" | Selec
 1..5 | ForEach-Object { $n = "{0:D2}" -f $_; Copy-Item "C:\MT5_Master" "C:\MT5_$n" -Recurse -Force }
 
 # 只分发 EA
-$githubBase = "https://ghproxy.net/https://raw.githubusercontent.com/F96371/MT5_Deploy/main"
+$githubBase = "https://raw.githubusercontent.com/F96371/MT5_Deploy/main"
 1..5 | ForEach-Object { $n = "{0:D2}" -f $_; $d = "C:\MT5_$n\MQL5\Experts\"; if (!(Test-Path $d)) { New-Item $d -Type Directory }; Invoke-WebRequest -Uri "$githubBase/Zhihui_Matrix_V102.ex5" -OutFile "$d\Zhihui_Matrix_V102.ex5" }
 
 # 只创建快捷方式 + 自启动
@@ -123,11 +123,11 @@ $bat | Out-File "$env:USERPROFILE\Desktop\Clean_Logs.bat" -Encoding ASCII
 
 | 文件 | Raw 链接 | 用途 |
 |------|---------|------|
-| exness5setup.exe | `https://ghproxy.net/https://raw.githubusercontent.com/F96371/MT5_Deploy/main/exness5setup.exe` | MT5 安装器 |
-| Zhihui_Matrix_V102.ex5 | `https://ghproxy.net/https://raw.githubusercontent.com/F96371/MT5_Deploy/main/Zhihui_Matrix_V102.ex5` | EA 策略文件 |
-| MT5-SOP.md | `https://ghproxy.net/https://raw.githubusercontent.com/F96371/MT5_Deploy/main/MT5-SOP.md` | 本操作手册 |
+| exness5setup.exe | `https://raw.githubusercontent.com/F96371/MT5_Deploy/main/exness5setup.exe` | MT5 安装器 |
+| Zhihui_Matrix_V102.ex5 | `https://raw.githubusercontent.com/F96371/MT5_Deploy/main/Zhihui_Matrix_V102.ex5` | EA 策略文件 |
+| MT5-SOP.md | `https://raw.githubusercontent.com/F96371/MT5_Deploy/main/MT5-SOP.md` | 本操作手册 |
 
-> 💡 **使用 ghproxy.net 加速** - 国内下载速度更快，无需代理
+> 💡 **香港服务器直连 GitHub** - 速度快，无需代理或加速
 
 ---
 
@@ -155,7 +155,7 @@ A: `Ctrl+O` → Expert Advisors → 确认勾选 "Allow algorithmic trading" 和
 A: 双击桌面 `Clean_Logs.bat` 手动清理，或设置每周一定时任务。
 
 **Q: 下载速度慢？**  
-A: 脚本已配置 ghproxy.net 加速，如遇墙可尝试切换代理。
+A: 香港服务器直连 GitHub 应该很快，如遇到问题可临时切到代理或使用 `https://ghproxy.net/https://raw.githubusercontent.com/...` 格式。
 
 ---
 
