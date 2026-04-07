@@ -1,184 +1,151 @@
-# MT5 多账户隔离运维 SOP（5 实例精简版）
+# MT5 多账户隔离运维 SOP（终极精简版）
 
-> 适用于阿里云 Windows 服务器 | 单账户 200 元业务标准流程
-
----
-
-## 第一阶段：系统基础环境审计
-
-
-### 2. 电源优化
-```powershell
-powercfg -setactive SCHEME_MIN
-powercfg -change -monitor-timeout-ac 0
-powercfg -change -standby-timeout-ac 0
-```
-
-### 3. 创建目录
-```powershell
-New-Item -Path "C:\MT5_Master" -ItemType Directory -Force
-```
+> 适用于阿里云 Windows 服务器 | 单账户 200 元业务标准流程  
+> **核心原则：能自动的不手动，能一条的不两条**
 
 ---
 
-## 第二阶段：母本安装与克隆
+## 🚀 一键部署脚本（推荐）
 
-### 1. 安装母本（手动一次）
-- 运行 `exness5setup.exe`
-- **Settings** → 路径设为 `C:\MT5_Master`
-- 安装完成后**立即关闭**
-
-### 2. 批量克隆（5 个实例）
-```powershell
-1..5 | ForEach-Object { 
-    $num = "{0:D2}" -f $_
-    Copy-Item -Path "C:\MT5_Master" -Destination "C:\MT5_$num" -Recurse -Force 
-}
-```
-
----
-
-## 第三阶段：快捷方式生成
+**在服务器上执行此脚本，自动完成所有可自动化步骤：**
 
 ```powershell
-$WshShell = New-Object -ComObject WScript.Shell
+# ===== MT5 一键部署脚本 =====
+# 复制到阿里云服务器 PowerShell 执行
+
+# 1. 系统优化
+Stop-Service wuauserv -Force; Set-Service wuauserv -StartupType Disabled
+powercfg -setactive SCHEME_MIN; powercfg -change -monitor-timeout-ac 0; powercfg -change -standby-timeout-ac 0
+
+# 2. 等待母本安装完成（手动安装到 C:\MT5_Master 后按回车）
+Write-Host "请先安装 MT5 母本到 C:\MT5_Master，安装完成后按回车继续..." -ForegroundColor Yellow
+Read-Host "按回车继续"
+
+# 3. 克隆 5 个实例
+1..5 | ForEach-Object { $n = "{0:D2}" -f $_; Copy-Item "C:\MT5_Master" "C:\MT5_$n" -Recurse -Force }
+
+# 4. 生成桌面快捷方式 + 开机自启动
+$Wsh = New-Object -ComObject WScript.Shell
 1..5 | ForEach-Object {
-    $num = "{0:D2}" -f $_
-    $Shortcut = $WshShell.CreateShortcut("$([Environment]::GetFolderPath('Desktop'))\Account_$num.lnk")
-    $Shortcut.TargetPath = "C:\MT5_$num\terminal64.exe"
-    $Shortcut.Arguments = "/portable /skipupdate"
-    $Shortcut.WorkingDirectory = "C:\MT5_$num"
-    $Shortcut.Save()
+    $n = "{0:D2}" -f $_
+    $Sc = $Wsh.CreateShortcut("$env:USERPROFILE\Desktop\Account_$n.lnk")
+    $Sc.TargetPath = "C:\MT5_$n\terminal64.exe"; $Sc.Arguments = "/portable /skipupdate"
+    $Sc.WorkingDirectory = "C:\MT5_$n"; $Sc.Save()
+    Copy-Item "$env:USERPROFILE\Desktop\Account_$n.lnk" "$([Environment]::GetFolderPath('Startup'))\" -Force
 }
-```
 
----
-
-## 第四阶段：EA 静默分发（一步到位）
-
-```powershell
-# 下载并分发到所有 5 个实例
+# 5. 下载并分发 EA
 $eaUrl = "https://raw.githubusercontent.com/F96371/MT5_Deploy/main/智汇矩阵 V102 版本 (ssai).ex5"
 1..5 | ForEach-Object {
-    $num = "{0:D2}" -f $_
-    $TargetDir = "C:\MT5_$num\MQL5\Experts\"
-    if (!(Test-Path $TargetDir)) { New-Item $TargetDir -Type Directory -Force }
-    Invoke-WebRequest -Uri $eaUrl -OutFile "$TargetDir\智汇矩阵 V102 版本 (ssai).ex5" -Force
+    $n = "{0:D2}" -f $_
+    $dir = "C:\MT5_$n\MQL5\Experts\"
+    if (!(Test-Path $dir)) { New-Item $dir -Type Directory -Force }
+    Invoke-WebRequest -Uri $eaUrl -OutFile "$dir\智汇矩阵 V102 版本 (ssai).ex5" -Force
 }
-```
 
----
-
-## 第五阶段：开机自启动
-
-```powershell
-# 创建启动文件夹快捷方式
-$StartupPath = [System.IO.Path]::Combine([Environment]::GetFolderPath('Startup'), "*.lnk")
-1..5 | ForEach-Object {
-    $num = "{0:D2}" -f $_
-    Copy-Item "$([Environment]::GetFolderPath('Desktop'))\Account_$num.lnk" -Destination $([Environment]::GetFolderPath('Startup')) -Force
-}
-```
-
----
-
-## 第六阶段：账户初始化（手动）
-
-每个实例执行一次：
-
-1. **登录** - 填写 Exness 账号密码和服务器
-2. **减内存** - `Ctrl+O` → Charts → Max bars = `5000`
-3. **开权限** - `Ctrl+O` → Expert Advisors → 勾选：
-   - ✅ Allow algorithmic trading
-   - ✅ Allow DLL imports
-4. **清品种** - 市场报价窗口 → 右键 → Hide All
-
----
-
-## 第七阶段：日志清理脚本
-
-桌面新建 `Clean_Logs.bat`：
-```batch
+# 6. 创建日志清理脚本
+$bat = @"
 @echo off
-for /d %%i in (C:\MT5_*) do (
-    del /s /q "%%i\MQL5\Logs\*.log" 2>nul
-    del /s /q "%%i\MQL5\Files\*.log" 2>nul
-)
+for /d %%i in (C:\MT5_*) do (del /s /q "%%i\MQL5\Logs\*.log" 2>nul; del /s /q "%%i\MQL5\Files\*.log" 2>nul)
 echo [%DATE% %TIME%] Logs Cleaned!
+"@
+$bat | Out-File "$env:USERPROFILE\Desktop\Clean_Logs.bat" -Encoding ASCII
+
+Write-Host "✅ 部署完成！请手动登录 5 个 MT5 账户" -ForegroundColor Green
 ```
 
 ---
 
-## 🖥️ 本地电脑远程操作阿里云
+## 📝 唯一需要手动的步骤
 
-### 方式一：远程桌面 (RDP) 一键命令
-
-在本地电脑创建 `Deploy-MT5.ps1`，填入服务器 IP 和密码后执行：
-
+### 步骤 1：下载并安装 MT5 母本
 ```powershell
-# ===== 配置区 =====
-$ServerIP = "你的阿里云 IP"
-$Username = "Administrator"
-$Password = "你的服务器密码"
-# =================
+# 下载 MT5 安装器
+$mt5Url = "https://raw.githubusercontent.com/F96371/MT5_Deploy/main/exness5setup.exe"
+Invoke-WebRequest -Uri $mt5Url -OutFile "$env:USERPROFILE\Desktop\exness5setup.exe"
 
-# 创建远程会话
-$SecurePwd = ConvertTo-SecureString $Password -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential($Username, $SecurePwd)
-
-# 远程执行克隆命令
-Invoke-Command -ComputerName $ServerIP -Credential $Cred -ScriptBlock {
-    1..5 | ForEach-Object { 
-        $num = "{0:D2}" -f $_
-        Copy-Item -Path "C:\MT5_Master" -Destination "C:\MT5_$num" -Recurse -Force 
-    }
-}
+# 双击运行，安装路径选 C:\MT5_Master，装完关闭
+Start-Process "$env:USERPROFILE\Desktop\exness5setup.exe"
 ```
 
-### 方式二：SSH（如果阿里云开了 OpenSSH）
+### 步骤 2：运行上面的一键部署脚本
 
-```powershell
-# 本地电脑执行
-ssh Administrator@你的阿里云 IP
-
-# 登录后执行 PowerShell 命令
-powershell -Command "1..5 | ForEach-Object { Copy-Item -Path 'C:\MT5_Master' -Destination 'C:\MT5_$($_.ToString("00"))' -Recurse -Force }"
-```
-
-### 方式三：阿里云 Workbench（网页终端）
-
-直接复制粘贴上面的 PowerShell 命令到网页控制台执行。
+### 步骤 3：登录 5 个账户（每个约 1 分钟）
+| 实例 | 操作 |
+|------|------|
+| Account_01 ~ Account_05 | 双击打开 → 登录 Exness → `Ctrl+O` → Charts: 5000 → Expert Advisors: 勾选两项 → 隐藏无关品种 |
 
 ---
 
-## 📋 快速检查清单
+## 🔧 分项命令（按需使用）
 
+### 检查部署状态
 ```powershell
-# 检查实例数量
-Get-ChildItem C:\ | Where-Object { $_.Name -match "MT5_\d\d" } | Measure-Object
+# 实例数量
+Get-ChildItem C:\ -Directory | Where-Object { $_.Name -match "MT5_\d\d" } | Measure-Object | Select-Object -ExpandProperty Count
 
-# 检查 EA 是否到位
-1..5 | ForEach-Object { 
-    $num = "{0:D2}" -f $_
-    Write-Host "MT5_$num : $((Get-ChildItem "C:\MT5_$num\MQL5\Experts\*.ex5" -ErrorAction SilentlyContinue).Count) 个 EA 文件"
-}
+# EA 文件检查
+1..5 | ForEach-Object { $n = "{0:D2}" -f $_; Write-Host "MT5_$n : $((Test-Path "C:\MT5_$n\MQL5\Experts\*.ex5"))" }
 
-# 检查自启动
-Get-ChildItem "$([Environment]::GetFolderPath('Startup'))\*.lnk" | Select-Object Name
+# 自启动检查
+Get-ChildItem "$([Environment]::GetFolderPath('Startup'))\Account_*.lnk" | Select-Object Name
 ```
+
+### 单独执行某一步
+```powershell
+# 只克隆实例
+1..5 | ForEach-Object { $n = "{0:D2}" -f $_; Copy-Item "C:\MT5_Master" "C:\MT5_$n" -Recurse -Force }
+
+# 只分发 EA
+$eaUrl = "https://raw.githubusercontent.com/F96371/MT5_Deploy/main/智汇矩阵 V102 版本 (ssai).ex5"
+1..5 | ForEach-Object { $n = "{0:D2}" -f $_; $d = "C:\MT5_$n\MQL5\Experts\"; if (!(Test-Path $d)) { New-Item $d -Type Directory }; Invoke-WebRequest -Uri $eaUrl -OutFile "$d\智汇矩阵 V102 版本 (ssai).ex5" -Force }
+
+# 只创建快捷方式 + 自启动
+$Wsh = New-Object -ComObject WScript.Shell; 1..5 | ForEach-Object { $n = "{0:D2}" -f $_; $Sc = $Wsh.CreateShortcut("$env:USERPROFILE\Desktop\Account_$n.lnk"); $Sc.TargetPath = "C:\MT5_$n\terminal64.exe"; $Sc.Arguments = "/portable /skipupdate"; $Sc.WorkingDirectory = "C:\MT5_$n"; $Sc.Save(); Copy-Item "$env:USERPROFILE\Desktop\Account_$n.lnk" "$([Environment]::GetFolderPath('Startup'))\" -Force }
+```
+
+### 清理所有实例（重装时用）
+```powershell
+Remove-Item "C:\MT5_*" -Recurse -Force -ErrorAction SilentlyContinue
+Remove-Item "$env:USERPROFILE\Desktop\Account_*.lnk" -Force -ErrorAction SilentlyContinue
+Remove-Item "$([Environment]::GetFolderPath('Startup'))\Account_*.lnk" -Force -ErrorAction SilentlyContinue
+```
+
+---
+
+## 📦 文件清单（GitHub 仓库）
+
+| 文件 | Raw 链接 | 用途 |
+|------|---------|------|
+| exness5setup.exe | `https://raw.githubusercontent.com/F96371/MT5_Deploy/main/exness5setup.exe` | MT5 安装器 |
+| 智汇矩阵 V102 版本 (ssai).ex5 | `https://raw.githubusercontent.com/F96371/MT5_Deploy/main/智汇矩阵 V102 版本 (ssai).ex5` | EA 策略文件 |
+| MT5-SOP.md | `https://raw.githubusercontent.com/F96371/MT5_Deploy/main/MT5-SOP.md` | 本操作手册 |
 
 ---
 
 ## ⚠️ 注意事项
 
-| 项目 | 建议 |
-|------|------|
-| 内存 | 8GB 最多跑 15 个实例，5 个很轻松 |
+| 项目 | 建议值 |
+|------|--------|
+| 内存 | 8GB 最多 15 实例，5 实例约占用 3-4GB |
 | CPU | 2 核够用，4 核更稳 |
-| 磁盘 | 预留 20GB+（日志会增长） |
-| 网络 | 确保 443/444 端口出栈正常 |
-| 重启 | 阿里云后台重启后会自动拉起 |
+| 磁盘 | 预留 20GB+（日志会增长，每周清理） |
+| 网络 | 确保 443/444 端口出栈正常（Exness 服务器） |
+| 重启 | 阿里云后台重启后会自动拉起（自启动已配置） |
 
 ---
 
-*最后更新：2026-04-07*
+## 🆘 常见问题
+
+**Q: 实例启动后闪退？**  
+A: 检查是否以 `/portable` 模式启动，或母本安装路径是否正确。
+
+**Q: EA 不运行？**  
+A: `Ctrl+O` → Expert Advisors → 确认勾选 "Allow algorithmic trading" 和 "Allow DLL imports"。
+
+**Q: 日志文件夹爆满？**  
+A: 双击桌面 `Clean_Logs.bat` 手动清理，或设置每周一定时任务。
+
+---
+
+*最后更新：2026-04-07 | 版本：2.0（全自动化）*
