@@ -6,11 +6,6 @@
 
 ## 第一阶段：系统基础环境审计
 
-### 1. 关闭自动更新
-```powershell
-Stop-Service wuauserv -Force
-Set-Service wuauserv -StartupType Disabled
-```
 
 ### 2. 电源优化
 ```powershell
@@ -59,23 +54,16 @@ $WshShell = New-Object -ComObject WScript.Shell
 
 ---
 
-## 第四阶段：EA 静默分发
+## 第四阶段：EA 静默分发（一步到位）
 
-### 1. 下载 EA 到服务器
 ```powershell
-# 在服务器上执行
+# 下载并分发到所有 5 个实例
 $eaUrl = "https://raw.githubusercontent.com/F96371/MT5_Deploy/main/智汇矩阵 V102 版本 (ssai).ex5"
-Invoke-WebRequest -Uri $eaUrl -OutFile "C:\Users\Administrator\Desktop\TEMP_EA\智汇矩阵 V102 版本 (ssai).ex5"
-```
-
-### 2. 分发到所有实例
-```powershell
-New-Item -Path "C:\Users\Administrator\Desktop\TEMP_EA" -ItemType Directory -Force
 1..5 | ForEach-Object {
     $num = "{0:D2}" -f $_
     $TargetDir = "C:\MT5_$num\MQL5\Experts\"
     if (!(Test-Path $TargetDir)) { New-Item $TargetDir -Type Directory -Force }
-    Copy-Item "C:\Users\Administrator\Desktop\TEMP_EA\*.ex5" $TargetDir -Force
+    Invoke-WebRequest -Uri $eaUrl -OutFile "$TargetDir\智汇矩阵 V102 版本 (ssai).ex5" -Force
 }
 ```
 
