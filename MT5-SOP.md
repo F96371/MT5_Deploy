@@ -1,4 +1,4 @@
-﻿# MT5 多账户运维 SOP
+# MT5 多账户运维 SOP
 
 > 阿里云 Windows 服务器 | EA: 智汇矩阵 V102 版本 (ssai)  
 > **能自动的不手动，能一条的不两条**
@@ -9,7 +9,7 @@
 
 在服务器 PowerShell 中执行：
 
-``powershell
+```powershell
 # === MT5 自动化部署 V3.1 (新服务器纯净版) ===
 $AccountCount = 5
 $githubBase = "https://raw.githubusercontent.com/F96371/MT5_Deploy/main"
@@ -71,13 +71,13 @@ Stop-Process -Name "terminal64" -Force -ErrorAction SilentlyContinue
 }
 
 Write-Host "✅ 新服务器部署完成！Everything 及其命令行工具已就绪。" -ForegroundColor Yellow
-``
+```
 
 ---
 
 ## 2. 增量克隆（新增实例，自动续接序号）
 
-``powershell
+```powershell
 # ===== MT5 增量自动化部署 (自动续接序号版) =====
 
 # [配置区]
@@ -135,13 +135,13 @@ $StartIndex..$EndIndex | ForEach-Object {
 }
 
 Write-Host "✅ 增量部署完成！已从 $StartIndex 续接到 $EndIndex。" -ForegroundColor Yellow
-``
+```
 
 ---
 
 ## 3. EA 清除（秒级清理残留）
 
-``powershell
+```powershell
 # 1. 确保服务启动并留出索引时间
 Write-Host "等待 Everything 索引初始化..." -ForegroundColor Gray
 Start-Sleep -Seconds 3
@@ -162,13 +162,13 @@ if ($targets) {
 } else {
     Write-Host "未发现相关残留文件，环境纯净。" -ForegroundColor Green
 }
-``
+```
 
 ---
 
 ## 4. EA 重新分发（补发到已有实例）
 
-``powershell
+```powershell
 # ===== 模块：EA 重新分发与实例启动 =====
 
 # [配置区]
@@ -200,13 +200,13 @@ Write-Host "--- 开始执行 EA 补发流程 ---" -ForegroundColor Cyan
 
 Write-Host "✅ 所有 EA 补发完成并已尝试拉起窗口。" -ForegroundColor Green
 Write-Host "请在手动挂载 EA 后，再次运行 Everything 删除命令。" -ForegroundColor Yellow
-``
+```
 
 ---
 
 ## 手动配置（每个实例）
 
-双击打开 Account → 登录 Exness → Ctrl+O → **Charts: 5000** → **Expert Advisors**: 勾选两项
+双击打开 Account → 登录 Exness → `Ctrl+O` → **Charts: 5000** → **Expert Advisors**: 勾选两项
 
 - ✅ Allow algorithmic trading
 - ✅ Allow DLL imports
@@ -217,11 +217,11 @@ Write-Host "请在手动挂载 EA 后，再次运行 Everything 删除命令。"
 
 | 文件 | 用途 |
 |------|------|
-| exness5setup.exe | MT5 Exness 安装器 |
-| Everything-1.4.1.1032.x86-Setup.exe | Everything 静默安装包 |
-| es.exe | Everything 命令行工具 |
-| 智汇矩阵 V102 版本 (ssai).ex5 | EA 策略文件 |
-| MT5-SOP.md | 本操作手册 |
+| `exness5setup.exe` | MT5 Exness 安装器 |
+| `Everything-1.4.1.1032.x86-Setup.exe` | Everything 静默安装包 |
+| `es.exe` | Everything 命令行工具 |
+| `智汇矩阵 V102 版本 (ssai).ex5` | EA 策略文件 |
+| `MT5-SOP.md` | 本操作手册 |
 
 ---
 
